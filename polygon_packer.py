@@ -4,6 +4,7 @@ import matplotlib.pyplot as ppt
 from numba import njit
 from joblib import Parallel, delayed
 import argparse
+import os
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("inner_polygons", type=int, help="Number of inner polygons")
@@ -195,4 +196,11 @@ for i in range(N):
     ax.fill(polygon_plot[:,0], polygon_plot[:,1], "#CCCCCC", edgecolor="black", linewidth=0.5)
 ax.set_aspect("equal")
 ppt.title(f"Side length: {best_S * np.sin(np.pi / nsc) / np.sin(np.pi / nsi)}")
-ppt.savefig(f"{N}_{nsi}_in_{nsc}.png")
+
+if not os.path.exists(f"{N}_{nsi}_in_{nsc}.png"):
+    ppt.savefig(f"{N}_{nsi}_in_{nsc}.png")
+else:
+    file_i = 1
+    while os.path.exists(f"{N}_{nsi}_in_{nsc}_({file_i}).png"):
+        file_i += 1
+    ppt.savefig(f"{N}_{nsi}_in_{nsc}_({file_i}).png")
