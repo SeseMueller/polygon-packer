@@ -13,6 +13,7 @@ arg_parser.add_argument("container_sides", type=int, help="Number of sides of th
 arg_parser.add_argument("--attempts", type=int, default=1000, help="Number of attempts to run")
 arg_parser.add_argument("--tolerance", type=float, default=1e-8, help="Overlap penalty tolerance. Probably best left at default")
 arg_parser.add_argument("--finalstep", type=float, default=0.0001, help="How small the last theoretical step in container size decrease will be (it gets smaller over time)")
+arg_parser.add_argument("--output_format", type=str, default="png", help="The file type of the output (png or svg, defaults to png)")
 args = arg_parser.parse_args()
 
 N = args.inner_polygons
@@ -197,10 +198,19 @@ for i in range(N):
 ax.set_aspect("equal")
 ppt.title(f"Side length: {best_S * np.sin(np.pi / nsc) / np.sin(np.pi / nsi)}")
 
-if not os.path.exists(f"{N}_{nsi}_in_{nsc}.png"):
-    ppt.savefig(f"{N}_{nsi}_in_{nsc}.png")
-else:
-    file_i = 1
-    while os.path.exists(f"{N}_{nsi}_in_{nsc}_({file_i}).png"):
-        file_i += 1
-    ppt.savefig(f"{N}_{nsi}_in_{nsc}_({file_i}).png")
+if args.output_format = "png":
+    if not os.path.exists(f"{N}_{nsi}_in_{nsc}.png"):
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}.png")
+    else:
+        file_i = 1
+        while os.path.exists(f"{N}_{nsi}_in_{nsc}_({file_i}).png"):
+            file_i += 1
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}_({file_i}).png")
+elif args.output_format = "svg":
+    if not os.path.exists(f"{N}_{nsi}_in_{nsc}.svg"):
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}.svg")
+    else:
+        file_i = 1
+        while os.path.exists(f"{N}_{nsi}_in_{nsc}_({file_i}).svg"):
+            file_i += 1
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}_({file_i}).svg")
