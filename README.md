@@ -15,3 +15,5 @@ Optional parameters:
 - `--tolerance`: the tolerance for the penalty function. More penalty reduces the margin of overlap but limits exporation. Defaults to an empirical sweetspot of 0.00000001.
 - `--finalstep`: the container size is decreased by a smaller factor each time, to save compute at the beginning and achieve greater precision near the end. This sets the step size of the shrinkage which would correspond to the theoretical minimum container size (which, for most packings, will not actually be reached, so keep that in mind when setting this parameter). Defaults to 0.0001.
 - `--output_format`: the file type of the output image. Currently supported types are png (default) and svg.
+
+If the `polygon_packer_norot.py` (for no (relative) rotation) file is used instead, the rotations of all inner shapes is locked together. That is, it instead solves the packing problem without allowing rotation. 
