@@ -17,7 +17,6 @@ arg_parser.add_argument("--tolerance", type=float, default=1e-8, help="Overlap p
 arg_parser.add_argument("--finalstep", type=float, default=0.0001, help="How small the last theoretical step in container size decrease will be (it gets smaller over time)")
 arg_parser.add_argument("--output_format", type=str, default="png", help="The file type of the output (png or svg, defaults to png)")
 # We want to fix the rotation of the inner polygons, but only if the user specified it. 
-arg_parser.add_argument("--fix_rotation", type=float, help="If set, fixes the rotation of the inner polygons to this value.", required=True)
 args = arg_parser.parse_args()
 
 N = args.inner_polygons
@@ -26,8 +25,6 @@ nsc = args.container_sides
 attempts = args.attempts
 penalty_tolerance = args.tolerance
 final_step_size = args.finalstep
-global_rotation = args.fix_rotation
-rotation_is_fixed = global_rotation is not None
 
 unit_polygon_angles = np.linspace(0, 2 * np.pi, nsi, endpoint=False)
 unit_polygon_vertices = np.column_stack((np.cos(unit_polygon_angles), np.sin(unit_polygon_angles)))
@@ -82,11 +79,12 @@ def bh_function(values, S):
     penalty = 0.0
     polygon_array = np.zeros((N, nsi, 2))
     vector_array = np.zeros((N, nsi, 2))
+    rotation = values[-1]
     for i in range(N):
         posx = values[i * 2]
         posy = values[i * 2 + 1]
-        polygon_array[i] = transform_polygon(posx, posy, global_rotation, unit_polygon_vertices)
-        vector_array[i] = rotate_vectors(global_rotation, unit_polygon_vectors)
+        polygon_array[i] = transform_polygon(posx, posy, rotation, unit_polygon_vertices)
+        vector_array[i] = rotate_vectors(rotation, unit_polygon_vectors)
 
         penalty += poking_penalty(polygon_array[i], S)
 
@@ -142,14 +140,15 @@ def repetition(seed):
     range = initial_S - lowest_S
 
     if np.random.rand() < 0.5:
-        x0 = np.random.uniform(-dynamic_S/2, dynamic_S/2, N * 2)
+        x0 = np.random.uniform(-dynamic_S/2, dynamic_S/2, N * 2 + 1)
     else:
         grid_linspace = np.linspace(-dynamic_S/2 * 0.9, dynamic_S/2 * 0.9, int(np.ceil(np.sqrt(N))))
         xx, yy = np.meshgrid(grid_linspace, grid_linspace)
         grid_points = np.column_stack((xx.flatten(), yy.flatten()))[:N]
-        x0 = np.zeros(N * 2)
-        x0[0::2] = grid_points[:, 0]
-        x0[1::2] = grid_points[:, 1]
+        x0 = np.zeros(N * 2 + 1)
+        x0[0:-1:2] = grid_points[:, 0] # This is so cursed. 
+        x0[1:-1:2] = grid_points[:, 1]
+        x0[-1] = 0 # Zero rotation
     
     last_valid_x = x0.copy()
     last_valid_S = dynamic_S
@@ -191,35 +190,31 @@ for s, values in results:
 
 print("Final side length:", best_S * np.sin(np.pi / nsc) / np.sin(np.pi / nsi))
 
-final_positions = positions = best_values.reshape((N, 2))
+final_positions = positions = best_values[:-1].reshape((N, 2))
+final_rotation = best_values[-1]
 fig, ax = ppt.subplots()
 container_plot = np.vstack((unit_container_vertices * best_S, unit_container_vertices[0] * best_S))
 ax.plot(container_plot[:,0], container_plot[:,1], color="#000000", linewidth=0.5)
 for i in range(N):
-    polygon = transform_polygon(best_values[i * 2], best_values[i * 2 + 1], global_rotation, unit_polygon_vertices)
+    polygon = transform_polygon(best_values[i * 2], best_values[i * 2 + 1], final_rotation, unit_polygon_vertices)
     polygon_plot = np.vstack((polygon, polygon[0]))
     ax.fill(polygon_plot[:,0], polygon_plot[:,1], "#CCCCCC", edgecolor="black", linewidth=0.5)
 ax.set_aspect("equal")
 ppt.title(f"Side length: {best_S * np.sin(np.pi / nsc) / np.sin(np.pi / nsi)}")
 
-if rotation_is_fixed:
-    fix_string = "_fix"
-else:
-    fix_string = ""
-
 if args.output_format == "png":
-    if not os.path.exists(f"{N}_{nsi}_in_{nsc}{fix_string}.png"):
-        ppt.savefig(f"{N}_{nsi}_in_{nsc}{fix_string}.png")
+    if not os.path.exists(f"{N}_{nsi}_in_{nsc}_fix.png"):
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}_fix.png")
     else:
         file_i = 1
-        while os.path.exists(f"{N}_{nsi}_in_{nsc}{fix_string}_({file_i}).png"):
+        while os.path.exists(f"{N}_{nsi}_in_{nsc}_fix_({file_i}).png"):
             file_i += 1
-        ppt.savefig(f"{N}_{nsi}_in_{nsc}{fix_string}_({file_i}).png")
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}_fix_({file_i}).png")
 elif args.output_format == "svg":
-    if not os.path.exists(f"{N}_{nsi}_in_{nsc}{fix_string}.svg"):
-        ppt.savefig(f"{N}_{nsi}_in_{nsc}{fix_string}.svg")
+    if not os.path.exists(f"{N}_{nsi}_in_{nsc}_fix.svg"):
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}_fix.svg")
     else:
         file_i = 1
-        while os.path.exists(f"{N}_{nsi}_in_{nsc}{fix_string}_({file_i}).svg"):
+        while os.path.exists(f"{N}_{nsi}_in_{nsc}_fix_({file_i}).svg"):
             file_i += 1
-        ppt.savefig(f"{N}_{nsi}_in_{nsc}{fix_string}_({file_i}).svg")
+        ppt.savefig(f"{N}_{nsi}_in_{nsc}_fix_({file_i}).svg")
